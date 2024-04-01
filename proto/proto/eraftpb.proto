@@ -90,6 +90,7 @@ message HardState {
 }
 
 // ConfState contains the current membership information of the raft group
+// ConfState 包含了当前 raft 集群的成员信息
 message ConfState {
     // all node id
     repeated uint64 nodes = 1;

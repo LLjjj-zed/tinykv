@@ -79,6 +79,7 @@ func NewRawNode(config *Config) (*RawNode, error) {
 }
 
 // Tick advances the internal logical clock by a single tick.
+// TIck 通过一个时钟周期来推进内部逻辑时钟。
 func (rn *RawNode) Tick() {
 	rn.Raft.tick()
 }

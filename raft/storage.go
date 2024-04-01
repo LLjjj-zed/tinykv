@@ -44,29 +44,41 @@ var ErrSnapshotTemporarilyUnavailable = errors.New("snapshot is temporarily unav
 // If any Storage method returns an error, the raft instance will
 // become inoperable and refuse to participate in elections; the
 // application is responsible for cleanup and recovery in this case.
+// 这个接口可以由应用程序实现，用于从存储中检索日志条目。
+// 如果“Storage”接口的任何方法返回错误，那么Raft实例将变得不可用，并拒绝参与选举；在这种情况下，应用程序负责清理和恢复。
 type Storage interface {
 	// InitialState returns the saved HardState and ConfState information.
+	// 返回当前的初始状态，其中包括硬状态（HardState）以及配置（里面存储了集群中有哪些节点）
 	InitialState() (pb.HardState, pb.ConfState, error)
 	// Entries returns a slice of log entries in the range [lo,hi).
 	// MaxSize limits the total size of the log entries returned, but
 	// Entries returns at least one entry if any.
+	// 传入起始和结束索引值，以及最大的尺寸，返回索引范围在这个传入范围以内,并且不超过大小的日志条目数组。
 	Entries(lo, hi uint64) ([]pb.Entry, error)
 	// Term returns the term of entry i, which must be in the range
 	// [FirstIndex()-1, LastIndex()]. The term of the entry before
 	// FirstIndex is retained for matching purposes even though the
 	// rest of that entry may not be available.
+	// 传入日志索引i，返回这条日志对应的任期号。
+	// 找不到的情况下error返回值不为空，其中当返回ErrCompacted表示传入的索引数据已经找不到，
+	// 说明已经被压缩成快照数据了；返回ErrUnavailable：表示传入的索引值大于当前的最大索引
 	Term(i uint64) (uint64, error)
 	// LastIndex returns the index of the last entry in the log.
+	// 返回当前日志中最后一条日志的索引值。
 	LastIndex() (uint64, error)
 	// FirstIndex returns the index of the first log entry that is
 	// possibly available via Entries (older entries have been incorporated
 	// into the latest Snapshot; if storage only contains the dummy entry the
 	// first log entry is not available).
+	// 返回第一个可能通过Entries函数获得的日志条目的索引
+	//（较旧的条目已经被合并到最新的快照中；如果存储中只包含虚拟条目，则第一个日志条目不可用）
 	FirstIndex() (uint64, error)
 	// Snapshot returns the most recent snapshot.
 	// If snapshot is temporarily unavailable, it should return ErrSnapshotTemporarilyUnavailable,
 	// so raft state machine could know that Storage needs some time to prepare
 	// snapshot and call Snapshot later.
+	// Snapshot 函数返回最新的快照。如果快照暂时不可用，它应该返回 ErrSnapshotTemporarilyUnavailable 错误，
+	// 这样 Raft 状态机就可以知道 Storage 需要一些时间来准备快照，并稍后再调用 Snapshot 函数。
 	Snapshot() (pb.Snapshot, error)
 }
 
